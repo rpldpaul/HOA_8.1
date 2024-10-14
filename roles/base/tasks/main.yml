@@ -1,10 +1,10 @@
 ---
 - name: install updates (CentOS) 
   tags: always
-  dnf:
+  yum:
+    name: "*"
     update_only: yes
     update_cache: yes
-    use_backend: dnf4
   when: ansible distribution == "CentOS"
 
 - name: install updates (Ubuntu)

@@ -6,10 +6,10 @@
 
   - name: install updates (centOS)
     tags: always
-    dnf:
+    yum:
+      name: "*"
       update_only: yes
       update_cache: yes
-      use_backend: dnf4
     when: ansible_distribution == "CentOS"
 
   - name: install updates (Ubuntu)
@@ -23,11 +23,16 @@
   become: true
   tasks:
   
+  - name: Install EPEL Repo (prereq)
+    yum:
+      name: epel-release
+      state: latest
+    when: ansible_distribution == "CentOS"
+  
   - name: install nagios (centOS)
-    dnf:
+    yum:
       name: nagios
-      state: present
-      use_backend: dnf4
+      state: latest
     when: ansible_distribution == "CentOS"
 
   - name: install Nagios (Ubuntu)
@@ -45,13 +50,13 @@
 
   - name: Start Nagios (Ubuntu)
     service:
-      name: nagios3-core
+      name: nagios3
       state: restarted
       enabled: true
     when: ansible_distribution == "Ubuntu"
 
   - name: Install Nagios Dependencies (centOS)
-    dnf:
+    yum:
       name:
         - gd-devel
         - libpng-devel
@@ -59,7 +64,6 @@
         - gcc
         - glibc
       state: present
-      use_backend: dnf4
     when: ansible_distribution == "CentOS"
 
   - name: Install Nagios Dependencies (Ubuntu)
