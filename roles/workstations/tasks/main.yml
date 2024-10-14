@@ -1,0 +1,38 @@
+---
+
+- name: install Nagios (CentOS)
+  dnf:
+    name: nagios
+    state: present
+    use_backend: dnf4
+  when: ansible_distribution == "CentOS"
+
+- name: install Nagios (Ubuntu)
+  apt:
+    name: nagios3-core
+    state: present
+  when: ansible distribution == "Ubuntu"
+
+- name: Install Nagios Dependencies (CentOS)
+  dnf:
+    name:
+      - gd-devel
+      - libpng-devel
+      - freetype-devel
+      - gcc
+      - glibc
+    state: present
+    use_backend: dnf4
+  when: ansible_distribution == "CentOS"
+
+- name: Insall Nagios Dependencies (Ubuntu)
+  apt:
+    name:
+      - gd-devel
+      - libpng-devel
+      - freetype-devel
+      - gcc
+      - glibc
+    state: present
+    use_backend: dnf4
+  when: ansible_distribution == "Ubuntu"

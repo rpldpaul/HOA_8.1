@@ -1,0 +1,74 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (centOS)
+    tags: always
+    dnf:
+      update_only: yes
+      update_cache: yes
+      use_backend: dnf4
+    when: ansible_distribution == "CentOS"
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:  
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+- hosts: workstations
+  become: true
+  tasks:
+  
+  - name: install nagios (centOS)
+    dnf:
+      name: nagios
+      state: present
+      use_backend: dnf4
+    when: ansible_distribution == "CentOS"
+
+  - name: install Nagios (Ubuntu)
+    apt:
+      name: nagios3-core
+      state: present
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Start Nagios (centOS)
+    service:
+      name: nagios
+      state: restarted
+      enabled: true
+    when: ansible_distribution == "CentOS"
+
+  - name: Start Nagios (Ubuntu)
+    service:
+      name: nagios3-core
+      state: restarted
+      enabled: true
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Install Nagios Dependencies (centOS)
+    dnf:
+      name:
+        - gd-devel
+        - libpng-devel
+        - freetype-devel
+        - gcc
+        - glibc
+      state: present
+      use_backend: dnf4
+    when: ansible_distribution == "CentOS"
+
+  - name: Install Nagios Dependencies (Ubuntu)
+    apt:
+      name:
+        - libgd-dev
+        - libpng-dev
+        - libfreetype6-dev
+        - gcc
+        - libc6-dev
+      state: present
+    when: ansible_distribution == "Ubuntu"
