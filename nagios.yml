@@ -1,78 +1,12 @@
 ---
 
-- hosts: all
-  become: true
-  pre_tasks:
-
-  - name: install updates (centOS)
-    tags: always
-    yum:
-      name: "*"
-      update_only: yes
-      update_cache: yes
-    when: ansible_distribution == "CentOS"
-
-  - name: install updates (Ubuntu)
-    tags: always
-    apt:  
-      upgrade: dist
-      update_cache: yes
-    when: ansible_distribution == "Ubuntu"
-
-- hosts: workstations
-  become: true
+- name: Install Nagios on Ubuntu and CentOS
+  hosts: Remote
+  become: yes
   tasks:
-  
-  - name: Install EPEL Repo (prereq)
-    yum:
-      name: epel-release
-      state: latest
-    when: ansible_distribution == "CentOS"
-  
-  - name: install nagios (centOS)
-    yum:
+
+  - include_role:
+      name: base
+
+  - include_role:
       name: nagios
-      state: latest
-    when: ansible_distribution == "CentOS"
-
-  - name: install Nagios (Ubuntu)
-    apt:
-      name: nagios3-core
-      state: present
-    when: ansible_distribution == "Ubuntu"
-
-  - name: Start Nagios (centOS)
-    service:
-      name: nagios
-      state: restarted
-      enabled: true
-    when: ansible_distribution == "CentOS"
-
-  - name: Start Nagios (Ubuntu)
-    service:
-      name: nagios3
-      state: restarted
-      enabled: true
-    when: ansible_distribution == "Ubuntu"
-
-  - name: Install Nagios Dependencies (centOS)
-    yum:
-      name:
-        - gd-devel
-        - libpng-devel
-        - freetype-devel
-        - gcc
-        - glibc
-      state: present
-    when: ansible_distribution == "CentOS"
-
-  - name: Install Nagios Dependencies (Ubuntu)
-    apt:
-      name:
-        - libgd-dev
-        - libpng-dev
-        - libfreetype6-dev
-        - gcc
-        - libc6-dev
-      state: present
-    when: ansible_distribution == "Ubuntu"

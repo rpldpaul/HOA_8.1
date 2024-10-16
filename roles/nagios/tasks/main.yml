@@ -1,0 +1,159 @@
+---
+
+  - name: Install required dependencies on Ubuntu
+    apt:
+      name:
+        - gcc
+        - libc6
+        - make
+        - wget
+        - unzip
+        - apache2
+        - php
+        - libgd-dev
+        - openssl
+        - libssl-dev
+        - autoconf
+        - bc
+        - gawk
+        - dc
+        - build-essential
+        - snmp
+        - libnet-snmp-perl
+        - gettext
+      state: present
+    when: ansible_distribution == "Ubuntu"
+  
+  - name: Install required dependencies on CentOS
+    yum:
+      name:
+        - gcc
+        - glibc
+        - glibc-common
+        - wget
+        - unzip
+        - httpd
+        - php
+        - gd
+        - gd-devel
+        - perl
+        - postfix
+        - openssl
+        - openssl-devel
+        - make
+        - autoconf
+      state: present
+    when: ansible_distribution == "CentOS"
+
+  - name: Download Nagios Core source code
+    get_url:
+      url: "https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.5.6.tar.gz"
+      dest: /tmp/nagios-4.5.6.tar.gz
+
+  - name: Extract Nagios source code
+    unarchive:
+      src: /tmp/nagios-4.5.6.tar.gz
+      dest: /tmp
+      remote_src: yes
+
+  - name: Download Nagios Plugins
+    get_url:
+      url: "https://nagios-plugins.org/download/nagios-plugins-2.4.11.tar.gz"
+      dest: /tmp/nagios-plugins-2.4.11.tar.gz
+
+  - name: Extract Nagios Plugins
+    unarchive:
+      src: /tmp/nagios-plugins-2.4.11.tar.gz
+      dest: /tmp
+      remote_src: yes
+      
+  - name: Create Nagios group
+    group:
+      name: Nagios
+      
+  - name: Create Nagios user and group
+    user:
+      name: Admin
+      group: Nagios
+
+  - name: Create nagcmd group
+    group:
+      name: nagcmd
+
+  - name: Add nagios and apache/httpd users to nagcmd group
+    user:
+      name: "{{ item }}"
+      groups: nagcmd
+      append: yes
+    loop:
+      - nagios
+      - "{{ 'www-data' if ansible_os_family == 'Debian' else 'apache' }}"
+
+  - name: Compile and install Nagios Core
+    shell: |
+      cd /tmp/nagios-4.5.6
+      ./configure --with-command-group=nagcmd
+      make all
+      make install
+      make install-init
+      make install-commandmode
+      make install-config
+      make install-webconf
+    args:
+      creates: /usr/local/nagios/bin/nagios
+
+  - name: Install Nagios Plugins
+    shell: |
+      cd /tmp/nagios-plugins-2.4.11
+      ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+      make
+      make install
+    args:
+      creates: /usr/local/nagios/libexec/check_http
+
+  - name: Set Nagios admin password
+    command: htpasswd -b -c /usr/local/nagios/etc/htpasswd.users Admin_Paul "@paulrpld"
+
+  - name: Enable and start Apache/Httpd service on Ubuntu
+    service:
+      name: apache2
+      enabled: yes
+      state: started
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Enable and start Apache/Httpd service on CentOS
+    service:
+      name: httpd
+      enabled: yes
+      state: started
+    when: ansible_distribution == "CentOS"
+
+  - name: Enable and start Nagios service
+    service:
+      name: nagios
+      enabled: yes
+      state: started
+
+  - name: Enable external command execution in Nagios
+    lineinfile:
+      path: /usr/local/nagios/etc/nagios.cfg
+      regexp: '^#?check_external_commands='
+      line: 'check_external_commands=1'
+
+  - name: Restart Nagios service to apply changes
+    service:
+      name: nagios
+      state: restarted
+
+  - name: Restart Apache/Httpd to apply changes on Ubuntu
+    service:
+      name: apache2
+      state: restarted
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Restart Apache/Httpd to apply changes on CentOS
+    service:
+      name: httpd
+      state: restarted
+    when: ansible_distribution == "CentOS"
+

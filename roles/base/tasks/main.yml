@@ -1,15 +1,12 @@
 ---
-- name: install updates (CentOS) 
-  tags: always
-  yum:
-    name: "*"
-    update_only: yes
-    update_cache: yes
-  when: ansible distribution == "CentOS"
-
-- name: install updates (Ubuntu)
-  tags: always
+- name: Update package cache
   apt:
-    upgrade: dist
     update_cache: yes
   when: ansible_distribution == "Ubuntu"
+
+- name: Update package cache
+  yum:
+    update_cache: yes
+    name: '*'
+    state: latest
+  when: ansible_distribution == "CentOS"
